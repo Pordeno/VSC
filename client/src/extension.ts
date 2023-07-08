@@ -1,5 +1,9 @@
 // Copyright 2018-2022 the Deno authors. All rights reserved. MIT license.
 
+export { deactivate , activate }
+
+
+import { satisfies } from "semver";
 import * as commands from "./commands";
 import {
   ENABLE_PATHS,
@@ -20,100 +24,137 @@ import { assert } from "./util";
 import * as vscode from "vscode";
 
 /** The language IDs we care about. */
+
 const LANGUAGES = [
-  "typescript",
-  "javascript",
-  "typescriptreact",
-  "javascriptreact",
-];
+    'typescriptreact' ,
+    'javascriptreact' ,
+    'typescript' ,
+    'javascript'
+]
 
 /** These are keys of settings that have a scope of window or machine. */
-const workspaceSettingsKeys: Array<keyof Settings> = [
-  "cache",
-  "certificateStores",
-  "codeLens",
-  "config",
-  "documentPreloadLimit",
-  "maxTsServerMemory",
-  "enable",
-  "enablePaths",
-  "importMap",
-  "inlayHints",
-  "internalDebug",
-  "lint",
-  "path",
-  "suggest",
-  "testing",
-  "tlsCertificate",
-  "unsafelyIgnoreCertificateErrors",
-  "unstable",
-];
+
+const workspaceSettingsKeys = [
+
+    'unsafelyIgnoreCertificateErrors' ,
+    'documentPreloadLimit' ,
+    'maxTsServerMemory' ,
+    'certificateStores' ,
+    'tlsCertificate' ,
+    'internalDebug' ,
+    'enablePaths' ,
+    'inlayHints' ,
+    'importMap' ,
+    'codeLens' ,
+    'unstable' ,
+    'suggest' ,
+    'testing' ,
+    'config' ,
+    'enable' ,
+    'cache' ,
+    'lint' ,
+    'path'
+
+] satisfies Array < keyof Settings >
+
 
 /** These are keys of settings that can apply to an individual resource, like
  * a file or folder. */
-const resourceSettingsKeys: Array<keyof Settings> = [
-  "codeLens",
-  "enable",
-  "enablePaths",
-];
+
+const resourceSettingsKeys = [
+
+    'enablePaths' ,
+    'codeLens' ,
+    'enable'
+
+] satisfies Array < keyof Settings >
+
 
 /** Convert a workspace configuration to `Settings` for a workspace. */
-function configToWorkspaceSettings(
-  config: vscode.WorkspaceConfiguration,
-): Settings {
-  const workspaceSettings = Object.create(null);
-  for (const key of workspaceSettingsKeys) {
-    workspaceSettings[key] = config.get(key);
-  }
-  return workspaceSettings;
+
+function configToWorkspaceSettings (
+    config : vscode.WorkspaceConfiguration
+){
+
+    const settings = Object
+        .create(null)
+
+    for ( const key of workspaceSettingsKeys )
+        settings[key] = config.get(key)
+
+    return settings as Settings
 }
+
 
 /** Convert a workspace configuration to settings that apply to a resource. */
-function configToResourceSettings(
-  config: vscode.WorkspaceConfiguration,
-): Partial<Settings> {
-  const resourceSettings = Object.create(null);
-  for (const key of resourceSettingsKeys) {
-    const value = config.inspect(key);
-    assert(value);
-    resourceSettings[key] = value.workspaceFolderLanguageValue ??
-      value.workspaceFolderValue ?? value.workspaceLanguageValue ??
-      value.workspaceValue ??
-      value.globalValue ??
-      value.defaultValue;
-  }
-  return resourceSettings;
-}
 
-function getEnabledPaths(): EnabledPaths[] {
-  const items = [] as EnabledPaths[];
-  if (!vscode.workspace.workspaceFolders) {
-    return items;
-  }
-  for (const workspaceFolder of vscode.workspace.workspaceFolders) {
-    const config = vscode.workspace.getConfiguration(
-      EXTENSION_NS,
-      workspaceFolder,
-    );
-    const enabledPaths = config.get<string[]>(ENABLE_PATHS);
-    if (!enabledPaths || !enabledPaths.length) {
-      continue;
+function configToResourceSettings (
+    config : vscode.WorkspaceConfiguration
+){
+
+    const settings = Object
+        .create(null)
+
+    for ( const key of resourceSettingsKeys ){
+
+        const value = config
+            .inspect(key)
+
+        assert(value)
+
+        settings[key] = value.workspaceFolderLanguageValue
+            ?? value.workspaceFolderValue
+            ?? value.workspaceLanguageValue
+            ?? value.workspaceValue
+            ?? value.globalValue
+            ?? value.defaultValue
     }
-    const paths = enabledPaths.map((folder) =>
-      vscode.Uri.joinPath(workspaceFolder.uri, folder).fsPath
-    );
-    items.push({
-      workspace: workspaceFolder.uri.fsPath,
-      paths,
-    });
-  }
-  return items;
+
+    return settings satisfies Partial<Settings>
 }
 
-function getWorkspaceSettings(): Settings {
-  const config = vscode.workspace.getConfiguration(EXTENSION_NS);
-  return configToWorkspaceSettings(config);
+
+function getEnabledPaths (){
+
+    const items : Array<EnabledPaths> = []
+
+    const folders = vscode
+        .workspace.workspaceFolders
+
+    if( ! folders )
+        return items
+
+    for ( const folder of folders ){
+
+        const config = vscode.workspace
+            .getConfiguration(EXTENSION_NS,folder)
+
+        const enabledPaths = config
+            .get<Array<string>>(ENABLE_PATHS)
+
+        if( ! enabledPaths?.length )
+            continue
+
+        const paths = enabledPaths
+            .map(( path ) => vscode.Uri.joinPath(folder.uri,path).fsPath);
+
+        const workspace = folder.uri.fsPath
+
+        items.push({ workspace , paths })
+    }
+
+    return items
 }
+
+
+function getWorkspaceSettings (){
+
+    const config = vscode.workspace
+        .getConfiguration(EXTENSION_NS)
+
+    return configToWorkspaceSettings(config)
+}
+
 
 function handleConfigurationChange(event: vscode.ConfigurationChangeEvent) {
   if (event.affectsConfiguration(EXTENSION_NS)) {
@@ -151,170 +192,216 @@ function handleConfigurationChange(event: vscode.ConfigurationChangeEvent) {
   }
 }
 
-function handleChangeWorkspaceFolders() {
-  extensionContext.enabledPaths = getEnabledPaths();
-  extensionContext.tsApi.refresh();
+function handleChangeWorkspaceFolders (){
+    extensionContext.enabledPaths = getEnabledPaths()
+    extensionContext.tsApi.refresh()
 }
 
-function handleDocumentOpen(...documents: vscode.TextDocument[]) {
-  let didChange = false;
-  for (const doc of documents) {
-    if (!LANGUAGES.includes(doc.languageId)) {
-      continue;
+
+function handleDocumentOpen (
+    ... documents : Array<vscode.TextDocument>
+){
+
+    const { documentSettings , tsApi } = extensionContext
+
+    let didChange = false;
+
+    for ( const doc of documents ){
+
+        if ( ! LANGUAGES.includes(doc.languageId) )
+            continue
+
+        const { languageId, uri } = doc;
+
+        const config = vscode.workspace
+            .getConfiguration(EXTENSION_NS, { languageId, uri })
+
+        documentSettings[ doc.uri.fsPath ] = {
+            settings : configToResourceSettings(config) ,
+            scope : { languageId , uri }
+        }
+
+        didChange = true
     }
-    const { languageId, uri } = doc;
-    extensionContext.documentSettings[doc.uri.fsPath] = {
-      scope: { languageId, uri },
-      settings: configToResourceSettings(
-        vscode.workspace.getConfiguration(EXTENSION_NS, { languageId, uri }),
-      ),
-    };
-    didChange = true;
-  }
-  if (didChange) {
-    extensionContext.tsApi.refresh();
-  }
+
+    if( didChange )
+        tsApi.refresh()
 }
 
-const extensionContext = {} as DenoExtensionContext;
+
+const extensionContext = {} as DenoExtensionContext
+
 
 /** When the extension activates, this function is called with the extension
  * context, and the extension bootstraps itself. */
-export async function activate(
-  context: vscode.ExtensionContext,
-): Promise<void> {
-  extensionContext.outputChannel = extensionContext.outputChannel ??
-    vscode.window.createOutputChannel(LANGUAGE_CLIENT_NAME);
-  extensionContext.clientOptions = {
-    documentSelector: [
-      { scheme: "file", language: "javascript" },
-      { scheme: "file", language: "javascriptreact" },
-      { scheme: "file", language: "typescript" },
-      { scheme: "file", language: "typescriptreact" },
-      { scheme: "deno", language: "javascript" },
-      { scheme: "deno", language: "javascriptreact" },
-      { scheme: "deno", language: "typescript" },
-      { scheme: "deno", language: "typescriptreact" },
-      { scheme: "file", language: "json" },
-      { scheme: "file", language: "jsonc" },
-      { scheme: "file", language: "markdown" },
-    ],
-    diagnosticCollectionName: "deno",
-    initializationOptions: getWorkspaceSettings,
-    markdown: {
-      isTrusted: true,
-    },
-  };
 
-  // When a workspace folder is opened, the updates or changes to the workspace
-  // folders need to be sent to the TypeScript language service plugin
-  vscode.workspace.onDidChangeWorkspaceFolders(
-    handleChangeWorkspaceFolders,
-    extensionContext,
-    context.subscriptions,
-  );
+async function activate (
+    context : vscode.ExtensionContext
+){
 
-  // When a document opens, the language server will query the client to
-  // determine the specific configuration of a resource, we need to ensure the
-  // the builtin TypeScript language service has the same "view" of the world,
-  // so when Deno is enabled, we need to disable the built in language service,
-  // but this is determined on a file by file basis.
-  vscode.workspace.onDidOpenTextDocument(
-    handleDocumentOpen,
-    extensionContext,
-    context.subscriptions,
-  );
+    extensionContext.outputChannel ??= vscode.window
+		.createOutputChannel(LANGUAGE_CLIENT_NAME)
 
-  // Send a notification to the language server when the configuration changes
-  // as well as update the TypeScript language service plugin
-  vscode.workspace.onDidChangeConfiguration(
-    handleConfigurationChange,
-    extensionContext,
-    context.subscriptions,
-  );
+    extensionContext.clientOptions = {
 
-  extensionContext.statusBar = new DenoStatusBar();
-  context.subscriptions.push(extensionContext.statusBar);
+        diagnosticCollectionName : 'deno' ,
+        initializationOptions : getWorkspaceSettings ,
 
-  // Register a content provider for Deno resolved read-only files.
-  context.subscriptions.push(
-    vscode.workspace.registerTextDocumentContentProvider(
-      SCHEME,
-      new DenoTextDocumentContentProvider(extensionContext),
-    ),
-  );
 
-  context.subscriptions.push(
-    vscode.debug.registerDebugConfigurationProvider(
-      "deno",
-      new DenoDebugConfigurationProvider(extensionContext),
-    ),
-  );
+        documentSelector : [
 
-  // Activate the task provider.
-  context.subscriptions.push(activateTaskProvider(extensionContext));
+			{ scheme : 'file' , language : 'typescriptreact' } ,
+			{ scheme : 'file' , language : 'javascriptreact' } ,
+			{ scheme : 'file' , language : 'javascript' } ,
+			{ scheme : 'file' , language : 'typescript' } ,
+			{ scheme : 'file' , language : 'markdown' } ,
+			{ scheme : 'file' , language : 'jsonc' } ,
+			{ scheme : 'file' , language : 'json' } ,
 
-  // Register any commands.
-  const registerCommand = createRegisterCommand(context);
-  registerCommand("cache", commands.cache);
-  registerCommand("initializeWorkspace", commands.initializeWorkspace);
-  registerCommand("restart", commands.startLanguageServer);
-  registerCommand("reloadImportRegistries", commands.reloadImportRegistries);
-  registerCommand("showReferences", commands.showReferences);
-  registerCommand("status", commands.status);
-  registerCommand("test", commands.test);
-  registerCommand("welcome", commands.welcome);
-  registerCommand("openOutput", commands.openOutput);
+			{ scheme : 'deno' , language : 'javascriptreact' } ,
+			{ scheme : 'deno' , language : 'typescriptreact' } ,
+			{ scheme : 'deno' , language : 'javascript' } ,
+			{ scheme : 'deno' , language : 'typescript' } ,
+        ],
 
-  extensionContext.tsApi = getTsApi(() => ({
-    documents: extensionContext.documentSettings,
-    enabledPaths: extensionContext.enabledPaths,
-    workspace: extensionContext.workspaceSettings,
-  }));
+        markdown : {
+        	isTrusted : true
+        }
+    }
 
-  extensionContext.documentSettings = {};
-  extensionContext.enabledPaths = getEnabledPaths();
-  extensionContext.workspaceSettings = getWorkspaceSettings();
 
-  // setup detection of enabling Deno detection
-  context.subscriptions.push(await setupCheckConfig());
+    // When a workspace folder is opened, the updates or changes to the workspace
+    // folders need to be sent to the TypeScript language service plugin
 
-  // when we activate, it might have been because a document was opened that
-  // activated us, which we need to grab the config for and send it over to the
-  // plugin
-  handleDocumentOpen(...vscode.workspace.textDocuments);
+	vscode.workspace.onDidChangeWorkspaceFolders(
+        handleChangeWorkspaceFolders ,
+        extensionContext ,
+        context.subscriptions
+    )
 
-  await commands.startLanguageServer(context, extensionContext)();
+    // When a document opens, the language server will query the client to
+    // determine the specific configuration of a resource, we need to ensure the
+    // the builtin TypeScript language service has the same "view" of the world,
+    // so when Deno is enabled, we need to disable the built in language service,
+    // but this is determined on a file by file basis.
+
+	vscode.workspace.onDidOpenTextDocument(
+        handleDocumentOpen ,
+        extensionContext ,
+        context.subscriptions
+    )
+
+
+    // Send a notification to the language server when the configuration changes
+    // as well as update the TypeScript language service plugin
+
+    vscode.workspace.onDidChangeConfiguration(
+        handleConfigurationChange ,
+        extensionContext ,
+        context.subscriptions
+    )
+
+
+    extensionContext.statusBar = new DenoStatusBar
+    context.subscriptions.push(extensionContext.statusBar)
+
+
+    // Register a content provider for Deno resolved read-only files.
+
+	context.subscriptions.push(
+        vscode.workspace.registerTextDocumentContentProvider(SCHEME,new DenoTextDocumentContentProvider(extensionContext))
+    )
+
+    context.subscriptions.push(
+        vscode.debug.registerDebugConfigurationProvider(
+        'deno',new DenoDebugConfigurationProvider(extensionContext))
+    )
+
+
+    // Activate the task provider.
+
+	context.subscriptions.push(activateTaskProvider(extensionContext));
+
+    // Register any commands.
+
+	const registerCommand = createRegisterCommand(context)
+    registerCommand('reloadImportRegistries',commands.reloadImportRegistries)
+    registerCommand('initializeWorkspace',commands.initializeWorkspace)
+    registerCommand('showReferences',commands.showReferences)
+    registerCommand('openOutput',commands.openOutput)
+    registerCommand('restart',commands.startLanguageServer)
+    registerCommand('welcome',commands.welcome)
+    registerCommand('status',commands.status)
+    registerCommand('cache',commands.cache)
+    registerCommand('test',commands.test)
+
+    extensionContext.tsApi = getTsApi(() => ({
+        enabledPaths : extensionContext.enabledPaths ,
+        workspace : extensionContext.workspaceSettings ,
+        documents : extensionContext.documentSettings
+    }))
+
+    extensionContext.workspaceSettings = getWorkspaceSettings()
+    extensionContext.documentSettings = {}
+    extensionContext.enabledPaths = getEnabledPaths()
+
+
+	// setup detection of enabling Deno detection
+
+    context.subscriptions.push(await setupCheckConfig())
+
+
+    // when we activate, it might have been because a document was opened that
+    // activated us, which we need to grab the config for and send it over to the
+    // plugin
+
+    handleDocumentOpen(...vscode.workspace.textDocuments)
+
+    await commands.startLanguageServer(context,extensionContext)()
 }
 
-export function deactivate(): Thenable<void> | undefined {
-  if (!extensionContext.client) {
-    return undefined;
-  }
 
-  const client = extensionContext.client;
-  extensionContext.client = undefined;
-  extensionContext.statusBar.refresh(extensionContext);
-  vscode.commands.executeCommand("setContext", ENABLEMENT_FLAG, false);
-  return client.stop();
+function deactivate (){
+
+    const { client } = extensionContext
+
+    if( ! client )
+        return
+
+    const { statusBar } = extensionContext
+
+    extensionContext.client = undefined
+
+    statusBar.refresh(extensionContext)
+
+    vscode.commands.executeCommand
+        ('setContext',ENABLEMENT_FLAG,false)
+
+    return client
+        .stop()
 }
+
 
 /** Internal function factory that returns a registerCommand function that is
  * bound to the extension context. */
-function createRegisterCommand(
-  context: vscode.ExtensionContext,
-): (name: string, factory: commands.Factory) => void {
-  return function registerCommand(
-    name: string,
-    factory: (
-      context: vscode.ExtensionContext,
-      extensionContext: DenoExtensionContext,
-    ) => commands.Callback,
-  ): void {
-    const fullName = `${EXTENSION_NS}.${name}`;
-    const command = factory(context, extensionContext);
-    context.subscriptions.push(
-      vscode.commands.registerCommand(fullName, command),
-    );
-  };
+
+type CommandCallback = (
+    context: vscode.ExtensionContext,
+    extensionContext: DenoExtensionContext,
+  ) => commands.Callback
+
+function createRegisterCommand (
+    context : vscode.ExtensionContext
+){
+    return ( name : string , onCommand : CommandCallback ) => {
+
+        const fullName = `${ EXTENSION_NS }.${ name }`
+
+        const command = onCommand(context,extensionContext)
+
+        const subscription = vscode.commands
+            .registerCommand(fullName,command)
+
+        context.subscriptions.push(subscription)
+    }
 }

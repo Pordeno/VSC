@@ -1,48 +1,67 @@
 // Copyright 2018-2022 the Deno authors. All rights reserved. MIT license.
 
-import type {
-  LanguageClient,
-  LanguageClientOptions,
-} from "vscode-languageclient/node";
-import type { DenoServerInfo } from "./server_info";
-import type { DocumentSettings, EnabledPaths, Settings } from "./shared_types";
-import type { DenoStatusBar } from "./status_bar";
-import type * as vscode from "vscode";
+export { DenoExtensionContext , TestCommandOptions , TsApi }
 
-import type { ServerCapabilities } from "vscode-languageclient";
+import type { DocumentSettings, EnabledPaths, Settings } from './shared_types'
+import type { LanguageClientOptions , LanguageClient } from 'vscode-languageclient/node'
+import type { ServerCapabilities } from 'vscode-languageclient'
+import type { DenoServerInfo } from './server_info'
+import type { DenoStatusBar } from './status_bar'
+import type * as vscode from 'vscode'
 
-export * from "./shared_types";
+export * from './shared_types'
 
-export interface TsApi {
-  /** Update the typescript-deno-plugin with settings. */
-  refresh(): void;
+
+interface TsApi {
+
+    /**
+     *  Update the Typescript-Deno-Plugin with settings.
+     */
+
+    refresh() : void
 }
+
 
 interface DenoExperimental {
-  /** Support for the `deno/task` request, which returns any tasks that are
-   * defined in configuration files. */
-  denoConfigTasks?: boolean;
+
+    /**
+     *  Support for the `deno/task` request,
+     *  which returns any tasks that are
+     *  defined in the config files.
+     */
+
+    denoConfigTasks ?: boolean
 }
 
-export interface DenoExtensionContext {
-  client: LanguageClient | undefined;
-  clientOptions: LanguageClientOptions;
-  /** A record of filepaths and their document settings. */
-  documentSettings: Record<string, DocumentSettings>;
-  enabledPaths: EnabledPaths[];
-  serverInfo: DenoServerInfo | undefined;
-  /** The capabilities returned from the server. */
-  serverCapabilities:
-    | ServerCapabilities<DenoExperimental>
-    | undefined;
-  statusBar: DenoStatusBar;
-  testController: vscode.TestController | undefined;
-  tsApi: TsApi;
-  /** The current workspace settings. */
-  workspaceSettings: Settings;
-  outputChannel: vscode.OutputChannel;
+
+interface DenoExtensionContext {
+
+    clientOptions : LanguageClientOptions
+    client : undefined | LanguageClient
+
+    /** A record of filepaths and their document settings. */
+
+    documentSettings : Record<string,DocumentSettings>
+    enabledPaths : Array<EnabledPaths>
+    serverInfo : undefined | DenoServerInfo
+
+    /** The capabilities returned from the server. */
+
+    serverCapabilities:
+        | ServerCapabilities<DenoExperimental>
+        | undefined
+
+    testController : undefined | vscode.TestController
+    statusBar : DenoStatusBar
+    tsApi : TsApi
+
+    /** The current workspace settings. */
+
+    workspaceSettings : Settings
+    outputChannel : vscode.OutputChannel
 }
 
-export interface TestCommandOptions {
-  inspect: boolean;
+
+interface TestCommandOptions {
+    inspect : boolean
 }

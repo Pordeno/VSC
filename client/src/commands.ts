@@ -24,6 +24,8 @@ import { registryState } from "./lsp_extensions";
 import { createRegistryStateHandler } from "./notification_handlers";
 import { DenoServerInfo } from "./server_info";
 
+export * from './Commands/InitializeWorkspace'
+
 import * as semver from "semver";
 import * as vscode from "vscode";
 import { LanguageClient, ServerOptions } from "vscode-languageclient/node";
@@ -70,36 +72,7 @@ export function cache(
   };
 }
 
-export function initializeWorkspace(
-  _context: vscode.ExtensionContext,
-  _extensionContext: DenoExtensionContext,
-): Callback {
-  return async () => {
-    try {
-      const settings = await pickInitWorkspace();
-      const config = vscode.workspace.getConfiguration(EXTENSION_NS);
-      await config.update("enable", true);
 
-      const lintInspect = config.inspect("lint");
-      assert(lintInspect);
-      const unstableInspect = config.inspect("unstable");
-      assert(unstableInspect);
-      // Don't write settings if they have default values.
-      if (lintInspect.defaultValue != settings.lint) {
-        await config.update("lint", settings.lint);
-      }
-      if (unstableInspect.defaultValue != settings.unstable) {
-        await config.update("unstable", settings.unstable);
-      }
-
-      await vscode.window.showInformationMessage(
-        "Deno is now setup in this workspace.",
-      );
-    } catch {
-      vscode.window.showErrorMessage("Deno project initialization failed.");
-    }
-  };
-}
 
 export function reloadImportRegistries(
   _context: vscode.ExtensionContext,
