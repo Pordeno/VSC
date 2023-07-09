@@ -13,6 +13,13 @@ import type { ConfigurationScope } from "vscode";
  * initialization.
  */
 export interface Settings {
+
+    /**
+     *  Should the document & dependencies be cached when saving?
+     */
+
+    cacheOnSave : boolean
+
   /** Specify an explicit path to the `deno` cache instead of using DENO_DIR
    * or the OS default. */
   cache: string | null;

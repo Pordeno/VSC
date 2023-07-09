@@ -32,6 +32,10 @@ const LANGUAGES = [
     'javascript'
 ]
 
+const isSupportedLang = ( language : string ) =>
+	LANGUAGES.includes(language)
+
+
 /** These are keys of settings that have a scope of window or machine. */
 
 const workspaceSettingsKeys = [
@@ -43,6 +47,7 @@ const workspaceSettingsKeys = [
     'tlsCertificate' ,
     'internalDebug' ,
     'enablePaths' ,
+    'cacheOnSave' ,
     'inlayHints' ,
     'importMap' ,
     'codeLens' ,
@@ -301,6 +306,9 @@ async function activate (
         context.subscriptions
     )
 
+    vscode.workspace.onDidSaveTextDocument
+        ( onSave , extensionContext , context.subscriptions )
+
 
     extensionContext.statusBar = new DenoStatusBar
     context.subscriptions.push(extensionContext.statusBar)
@@ -404,4 +412,39 @@ function createRegisterCommand (
 
         context.subscriptions.push(subscription)
     }
+}
+
+
+function onSave ( document : vscode.TextDocument ){
+
+    console.debug('Settings',extensionContext.documentSettings,extensionContext.workspaceSettings)
+
+	console.debug(`[ onSave ][ Cache ]: Enabled : ${ extensionContext.workspaceSettings.cacheOnSave }`)
+
+	if( ! extensionContext.workspaceSettings.cacheOnSave )
+        return
+
+	console.debug(`[ onSave ][ Cache ]: Supported Language : ${ isSupportedLang(document.languageId) }`)
+
+    if( ! isSupportedLang(document.languageId) )
+        return
+
+	console.debug(`[ onSave ][ Cache ]: Recache : ${ shouldRecache(document.uri) }`)
+
+	if( shouldRecache(document.uri) )
+	    vscode.commands.executeCommand('deno.cache')
+}
+
+
+function shouldRecache ( uri : vscode.Uri ){
+	return vscode
+		.languages
+        .getDiagnostics(uri)
+		.some(dontKeepCache)
+}
+
+
+function dontKeepCache ( { code } : vscode.Diagnostic ){
+    return code === 'no-cache-npm'
+        || code === 'no-cache'
 }

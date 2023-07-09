@@ -123,6 +123,15 @@
       "type": "object",
       "title": "Deno",
       "properties": {
+
+        "deno.cacheOnSave" : {
+            "markdownDescription" : "When enabled, caches the document & dependencies when saving.",
+            "examples" : [ false , true ] ,
+            "default" : true ,
+            "scope" : "resource" ,
+            "type" : "boolean"
+        },
+
         "deno.enable": {
           "type": "boolean",
           "default": false,

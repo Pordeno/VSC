@@ -28,6 +28,7 @@ const projectSettings = new Map<string, PluginSettings>();
 /** The default settings to assume to be true until a configuration message is
  * received from the extension. */
 const defaultSettings: Settings = {
+    cacheOnSave : true ,
   cache: null,
   certificateStores: null,
   enable: false,
@@ -65,6 +66,7 @@ function updateSettings(
   // We will update the default settings, which helps ensure that when a plugin
   // is created or re-created, we can assume what the previous settings where
   // until told otherwise.
+  console.debug('Settings',defaultSettings,settings.workspace)
   Object.assign(defaultSettings, settings.workspace);
 }
 
