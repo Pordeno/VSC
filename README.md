@@ -1,13 +1,11 @@
-# Deno for Visual Studio Code
 
-![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/denoland/vscode_deno/ci.yml?branch=main)
+<div align = center >
 
-![Visual Studio Marketplace Version](https://img.shields.io/visual-studio-marketplace/v/denoland.vscode-deno)
-![Visual Studio Marketplace Installs](https://img.shields.io/visual-studio-marketplace/i/denoland.vscode-deno)
-![Visual Studio Marketplace Downloads](https://img.shields.io/visual-studio-marketplace/d/denoland.vscode-deno)
-![Visual Studio Marketplace Rating (Stars)](https://img.shields.io/visual-studio-marketplace/stars/denoland.vscode-deno)
+# Alternative VSCode <br> extension for Deno
 
-<img align="right" src=https://raw.githubusercontent.com/denoland/vscode_deno/main/deno.png height="150px">
+</div>
+
+<img align="right" src=https://raw.githubusercontent.com/Pordeno/VSC/main/Resources/Icons/Pordeno.png height="150px">
 
 This extension adds support for using [Deno](https://deno.land/) with Visual
 Studio Code, powered by the Deno language server.
@@ -21,6 +19,12 @@ Studio Code, powered by the Deno language server.
 > install the Deno CLI.
 
 ![Basic Usage of the Extension](./screenshots/basic_usage.gif)
+
+<br>
+
+Based on [denoland/vscode_deno](https://github.com/denoland/vscode_deno) commit [0cde6b0](https://github.com/denoland/vscode_deno/commit/0cde6b0abdadf609c5cdc467066cd10a4f02710e)
+
+<br>
 
 ## Features
 
