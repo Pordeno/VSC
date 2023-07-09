@@ -6,6 +6,7 @@ import { EXTENSION_NS } from "./constants";
 
 import * as Files from 'node:fs/promises'
 import * as os from "os";
+import { normalize } from 'node:path'
 import * as path from "path";
 import * as process from "process";
 import * as vscode from "vscode";
@@ -31,14 +32,24 @@ async function getDenoCommandName (){
 
 /** Returns the absolute path to an existing deno command. */
 
+const Pattern_Env = /[%|$]([\w]+)[%|$]/g
+
 async function getDenoCommandPath (){
 
-    const command = getWorkspaceConfigDenoExePath()
+    let command = getWorkspaceConfigDenoExePath()
 
     const { workspaceFolders } = vscode.workspace
 
     if( ! command || ! workspaceFolders )
         return command ?? await getDefaultDenoCommand()
+
+    if( /[%|$]/g.test(command) ){
+
+        command = command
+            .replace(Pattern_Env,replaceWithEnv)
+    }
+
+	command = normalize(command)
 
     if( path.isAbsolute(command) )
         return command
@@ -54,6 +65,29 @@ async function getDenoCommandPath (){
     }
 
     return undefined
+
+
+    function replaceWithEnv ( _substring : string , key : string ){
+
+        const value = process.env[ key ]
+
+        if( value )
+            return value
+
+        vscode.window.showErrorMessage(
+            `Environment variable not found!`,{
+                modal : true ,
+                detail :
+                    `The environment variable used in the \n` +
+                    `deno.path configured in your VSCode \n` +
+                    `settings.json file is not present.\n` +
+                    `\n` +
+                    `Variable : '${ key }'\n` +
+                    `Path : '${ command }'`
+            } )
+
+        throw 'Failed to find env'
+    }
 }
 
 
