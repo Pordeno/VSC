@@ -25,6 +25,7 @@ import { createRegistryStateHandler } from "./notification_handlers";
 import { DenoServerInfo } from "./server_info";
 
 export * from './Commands/InitializeWorkspace'
+export * from './Commands/Cache'
 
 import * as semver from "semver";
 import * as vscode from "vscode";
@@ -43,34 +44,7 @@ export type Factory = (
   extensionContext: DenoExtensionContext,
 ) => Callback;
 
-/** For the current document active in the editor tell the Deno LSP to cache
- * the file and all of its dependencies in the local cache. */
-export function cache(
-  _context: vscode.ExtensionContext,
-  extensionContext: DenoExtensionContext,
-): Callback {
-  return (uris: DocumentUri[] = []) => {
-    const activeEditor = vscode.window.activeTextEditor;
-    const client = extensionContext.client;
-    if (!activeEditor || !client) {
-      return;
-    }
-    return vscode.window.withProgress({
-      location: vscode.ProgressLocation.Window,
-      title: "caching",
-    }, () => {
-      return client.sendRequest(
-        cacheReq,
-        {
-          referrer: { uri: activeEditor.document.uri.toString() },
-          uris: uris.map((uri) => ({
-            uri,
-          })),
-        },
-      );
-    });
-  };
-}
+
 
 
 
