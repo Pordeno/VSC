@@ -1,15 +1,12 @@
 
 export { Command as cache }
 
-
 import type { DenoExtensionContext } from '../types'
+import type { ExtensionContext } from 'vscode'
+
+import { ProgressLocation , window } from 'vscode'
 import { DocumentUri } from 'vscode-languageclient'
 import { cache } from '../lsp_extensions'
-
-import * as vscode from 'vscode'
-
-
-type Callback = ( ... args : any [] ) => unknown
 
 
 
@@ -20,12 +17,12 @@ type Callback = ( ... args : any [] ) => unknown
  */
 
 function Command (
-    _context : vscode.ExtensionContext ,
+    _context : ExtensionContext ,
     extensionContext : DenoExtensionContext
 ){
-    return (( uris : Array<DocumentUri> = [] ) => {
+    return ( uris : Array<DocumentUri> = [] ) => {
 
-        const activeEditor = vscode.window.activeTextEditor
+        const activeEditor = window.activeTextEditor
 
         if( ! activeEditor )
             return
@@ -35,13 +32,12 @@ function Command (
         if( ! client )
             return
 
-        return vscode.window.withProgress({
-            location : vscode.ProgressLocation.Window ,
+        return window.withProgress({
+            location : ProgressLocation.Window ,
             title : 'caching'
         },() => client.sendRequest(cache,{
             referrer : { uri : activeEditor.document.uri.toString() } ,
             uris : uris.map((uri) => ({ uri }))
         }))
-
-    }) satisfies Callback
+    }
 }

@@ -1,7 +1,6 @@
 
 export { Command as initializeWorkspace }
 
-
 import type { DenoExtensionContext } from '../types'
 import { pickInitWorkspace } from '../initialize_project'
 import { EXTENSION_NS } from '../constants'
@@ -10,14 +9,11 @@ import { assert } from '../util'
 import * as vscode from 'vscode'
 
 
-type Callback = ( ... args : any [] ) => unknown
-
-
 function Command (
     _context : vscode.ExtensionContext ,
     _extensionContext : DenoExtensionContext
 ){
-    return ( async () => {
+    return async () => {
 
         try {
 
@@ -55,5 +51,5 @@ function Command (
                 ( `Deno project initialization failed.` )
         }
 
-    }) satisfies Callback
+    }
 }
