@@ -9,11 +9,7 @@ the help of the Deno Language Server.
 <br>
 <br>
 
-<kbd>
-
-Based on [denoland/vscode_deno] commit [0cde6b0]
-
-</kbd>
+<kbd> <br> Based on [denoland/vscode_deno] commit [0cde6b0] <br> </kbd>
 
 <br>
 
